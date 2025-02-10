@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-  Camera,
   MoreHorizontal,
   ThumbsUp,
   MessageCircle,
@@ -31,6 +30,7 @@ const ProfilePage = () => {
   const [comments, setComments] = useState({});
   const [commentTexts, setCommentTexts] = useState({});
   const [showCommentOptions, setShowCommentOptions] = useState(null);
+  const [likes, setLikes] = useState({});
 
   const profile = {
     name: "Rami Sara",
@@ -45,13 +45,17 @@ const ProfilePage = () => {
 
     const unsubscribeNotes = onValue(notesQuery, (snapshot) => {
       const notesData = [];
+      const likesData = {};
       snapshot.forEach((childSnapshot) => {
-        notesData.unshift({
+        const noteData = {
           id: childSnapshot.key,
           ...childSnapshot.val(),
-        });
+        };
+        notesData.unshift(noteData);
+        likesData[noteData.id] = noteData.likes || 0;
       });
       setNotes(notesData);
+      setLikes(likesData);
     });
 
     const unsubscribeComments = onValue(commentsRef, (snapshot) => {
@@ -98,6 +102,25 @@ const ProfilePage = () => {
       setPostText("");
     } catch (err) {
       console.error("Error saving note:", err);
+    }
+  };
+
+  const handleLikePost = async (postId) => {
+    try {
+      const postRef = ref(database, `notes/${postId}`);
+      const currentLikes = likes[postId] || 0;
+
+      await set(postRef, {
+        ...notes.find((note) => note.id === postId),
+        likes: currentLikes + 1,
+      });
+
+      setLikes((prev) => ({
+        ...prev,
+        [postId]: currentLikes + 1,
+      }));
+    } catch (err) {
+      console.error("Error liking post:", err);
     }
   };
 
@@ -242,9 +265,12 @@ const ProfilePage = () => {
       )}
 
       <div className="flex items-center justify-between text-gray-500 py-2 border-t border-b mb-4">
-        <button className="flex items-center gap-2 hover:bg-gray-100 px-4 py-2 rounded-md">
+        <button
+          onClick={() => handleLikePost(post.id)}
+          className="flex items-center gap-2 hover:bg-gray-100 px-4 py-2 rounded-md"
+        >
           <ThumbsUp size={20} />
-          <span>{post.likes}</span>
+          <span>{likes[post.id] || 0}</span>
         </button>
         <button className="flex items-center gap-2 hover:bg-gray-100 px-4 py-2 rounded-md">
           <MessageCircle size={20} />
@@ -345,10 +371,6 @@ const ProfilePage = () => {
             <LogOut size={20} />
             <span>تسجيل الخروج</span>
           </button>
-          <button className="bg-white px-4 py-2 rounded-md flex items-center gap-2 shadow-sm">
-            <Camera size={20} />
-            <span>تغيير صورة الغلاف</span>
-          </button>
         </div>
       </div>
 
@@ -360,9 +382,6 @@ const ProfilePage = () => {
               alt="Profile"
               className="w-42 h-42 rounded-full border-4 border-white"
             />
-            <button className="absolute bottom-2 right-2 bg-gray-100 p-2 rounded-full">
-              <Camera size={20} />
-            </button>
           </div>
 
           <div className="flex-grow">
@@ -397,7 +416,6 @@ const ProfilePage = () => {
               </div>
             </form>
           </div>
-
           {notes.map(renderPost)}
         </div>
       </div>
