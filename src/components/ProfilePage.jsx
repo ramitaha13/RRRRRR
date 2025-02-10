@@ -8,8 +8,10 @@ import {
   Trash2,
   Clock,
   LogOut,
+  Image,
 } from "lucide-react";
 import { database } from "../firebase";
+import { db } from "../firebase";
 import {
   ref,
   push,
@@ -19,8 +21,8 @@ import {
   orderByChild,
   remove,
 } from "firebase/database";
+import { collection, getDocs } from "firebase/firestore";
 import profileImage from "../assets/1.JPG";
-import coverImage from "../assets/2.JPG";
 
 const ProfilePage = () => {
   const navigate = useNavigate();
@@ -31,20 +33,45 @@ const ProfilePage = () => {
   const [commentTexts, setCommentTexts] = useState({});
   const [showCommentOptions, setShowCommentOptions] = useState(null);
   const [likes, setLikes] = useState({});
+  const [coverImage, setCoverImage] = useState(null);
+  const [loadingCover, setLoadingCover] = useState(true);
 
-  // Authentication check on component mount
   useEffect(() => {
     const userInfo = JSON.parse(localStorage.getItem("user"));
-
-    // Check if user exists and username is exactly "Rami Sara"
     if (!userInfo || userInfo.username !== "Rami&Sara") {
       navigate("/home");
     }
   }, [navigate]);
 
+  useEffect(() => {
+    const fetchCoverImage = async () => {
+      try {
+        setLoadingCover(true);
+        const querySnapshot = await getDocs(collection(db, "coverImage"));
+        const imageList = querySnapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+
+        const sortedImages = imageList.sort(
+          (a, b) => new Date(b.uploadDate) - new Date(a.uploadDate)
+        );
+
+        if (sortedImages.length > 0) {
+          setCoverImage(sortedImages[0].imageData);
+        }
+      } catch (error) {
+        console.error("Error fetching cover image:", error);
+      } finally {
+        setLoadingCover(false);
+      }
+    };
+
+    fetchCoverImage();
+  }, []);
+
   const profile = {
     name: "Rami Sara",
-    coverPhoto: coverImage,
     profilePhoto: profileImage,
   };
 
@@ -92,6 +119,10 @@ const ProfilePage = () => {
   const handleLogout = () => {
     localStorage.removeItem("user");
     navigate("/home");
+  };
+
+  const handleChangeCover = () => {
+    navigate("/imageUrlUpload");
   };
 
   const handlePostSubmit = async (e) => {
@@ -369,11 +400,15 @@ const ProfilePage = () => {
   return (
     <div className="bg-gray-100 min-h-screen" dir="rtl">
       <div className="relative">
-        <img
-          src={profile.coverPhoto}
-          alt="Cover"
-          className="w-full h-[350px] object-cover"
-        />
+        {loadingCover ? (
+          <div className="w-full h-[350px] bg-gray-200 animate-pulse" />
+        ) : (
+          <img
+            src={coverImage || profileImage}
+            alt="Cover"
+            className="w-full h-[350px] object-cover"
+          />
+        )}
         <div className="absolute top-4 right-4 flex gap-2">
           <button
             onClick={handleLogout}
@@ -381,6 +416,13 @@ const ProfilePage = () => {
           >
             <LogOut size={20} />
             <span>تسجيل الخروج</span>
+          </button>
+          <button
+            onClick={handleChangeCover}
+            className="bg-blue-500 text-white px-4 py-2 rounded-md flex items-center gap-2 shadow-sm hover:bg-blue-600"
+          >
+            <Image size={20} />
+            <span>تغير صورة غلاف</span>
           </button>
         </div>
       </div>

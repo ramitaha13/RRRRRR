@@ -4,6 +4,7 @@ import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import "./index.css";
 import Home from "../src/components/home.jsx";
 import ProfilePage from "../src/components/ProfilePage.jsx";
+import ImageUrlUpload from "../src/components/imageUrlUpload.jsx";
 
 const router = createBrowserRouter([
   {
@@ -21,6 +22,10 @@ const router = createBrowserRouter([
   {
     path: "/profilePage",
     element: <ProfilePage />,
+  },
+  {
+    path: "/imageUrlUpload",
+    element: <ImageUrlUpload />,
   },
 ]);
 
