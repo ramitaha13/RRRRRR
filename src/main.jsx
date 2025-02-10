@@ -5,6 +5,7 @@ import "./index.css";
 import Home from "../src/components/home.jsx";
 import ProfilePage from "../src/components/ProfilePage.jsx";
 import ImageUrlUpload from "../src/components/imageUrlUpload.jsx";
+import ProfileImageDisplay from "../src/components/profileImageDisplay.jsx";
 
 const router = createBrowserRouter([
   {
@@ -26,6 +27,10 @@ const router = createBrowserRouter([
   {
     path: "/imageUrlUpload",
     element: <ImageUrlUpload />,
+  },
+  {
+    path: "/profileImageDisplay",
+    element: <ProfileImageDisplay />,
   },
 ]);
 

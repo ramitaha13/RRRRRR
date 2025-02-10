@@ -3,12 +3,14 @@ import { useNavigate } from "react-router-dom";
 import {
   MoreHorizontal,
   ThumbsUp,
+  ThumbsDown,
   MessageCircle,
   Send,
   Trash2,
   Clock,
   LogOut,
   Image,
+  Camera,
 } from "lucide-react";
 import { database } from "../firebase";
 import { db } from "../firebase";
@@ -22,7 +24,7 @@ import {
   remove,
 } from "firebase/database";
 import { collection, getDocs } from "firebase/firestore";
-import profileImage from "../assets/1.JPG";
+import defaultProfileImage from "../assets/1.JPG";
 
 const ProfilePage = () => {
   const navigate = useNavigate();
@@ -33,8 +35,11 @@ const ProfilePage = () => {
   const [commentTexts, setCommentTexts] = useState({});
   const [showCommentOptions, setShowCommentOptions] = useState(null);
   const [likes, setLikes] = useState({});
+  const [dislikes, setDislikes] = useState({});
   const [coverImage, setCoverImage] = useState(null);
+  const [profileImage, setProfileImage] = useState(null);
   const [loadingCover, setLoadingCover] = useState(true);
+  const [loadingProfile, setLoadingProfile] = useState(true);
 
   useEffect(() => {
     const userInfo = JSON.parse(localStorage.getItem("user"));
@@ -44,35 +49,56 @@ const ProfilePage = () => {
   }, [navigate]);
 
   useEffect(() => {
-    const fetchCoverImage = async () => {
+    const fetchImages = async () => {
       try {
+        // Fetch cover image
         setLoadingCover(true);
-        const querySnapshot = await getDocs(collection(db, "coverImage"));
-        const imageList = querySnapshot.docs.map((doc) => ({
+        const coverQuerySnapshot = await getDocs(collection(db, "coverImage"));
+        const coverImageList = coverQuerySnapshot.docs.map((doc) => ({
           id: doc.id,
           ...doc.data(),
         }));
 
-        const sortedImages = imageList.sort(
+        const sortedCoverImages = coverImageList.sort(
           (a, b) => new Date(b.uploadDate) - new Date(a.uploadDate)
         );
 
-        if (sortedImages.length > 0) {
-          setCoverImage(sortedImages[0].imageData);
+        if (sortedCoverImages.length > 0) {
+          setCoverImage(sortedCoverImages[0].imageData);
         }
-      } catch (error) {
-        console.error("Error fetching cover image:", error);
-      } finally {
         setLoadingCover(false);
+
+        // Fetch profile image
+        setLoadingProfile(true);
+        const profileQuerySnapshot = await getDocs(
+          collection(db, "profileImage")
+        );
+        const profileImageList = profileQuerySnapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+
+        const sortedProfileImages = profileImageList.sort(
+          (a, b) => new Date(b.uploadDate) - new Date(a.uploadDate)
+        );
+
+        if (sortedProfileImages.length > 0) {
+          setProfileImage(sortedProfileImages[0].imageData);
+        }
+        setLoadingProfile(false);
+      } catch (error) {
+        console.error("Error fetching images:", error);
+        setLoadingCover(false);
+        setLoadingProfile(false);
       }
     };
 
-    fetchCoverImage();
+    fetchImages();
   }, []);
 
   const profile = {
     name: "Rami Sara",
-    profilePhoto: profileImage,
+    profilePhoto: profileImage || defaultProfileImage,
   };
 
   useEffect(() => {
@@ -83,6 +109,7 @@ const ProfilePage = () => {
     const unsubscribeNotes = onValue(notesQuery, (snapshot) => {
       const notesData = [];
       const likesData = {};
+      const dislikesData = {};
       snapshot.forEach((childSnapshot) => {
         const noteData = {
           id: childSnapshot.key,
@@ -90,9 +117,11 @@ const ProfilePage = () => {
         };
         notesData.unshift(noteData);
         likesData[noteData.id] = noteData.likes || 0;
+        dislikesData[noteData.id] = noteData.dislikes || 0;
       });
       setNotes(notesData);
       setLikes(likesData);
+      setDislikes(dislikesData);
     });
 
     const unsubscribeComments = onValue(commentsRef, (snapshot) => {
@@ -125,6 +154,10 @@ const ProfilePage = () => {
     navigate("/imageUrlUpload");
   };
 
+  const handleProfileImageClick = () => {
+    navigate("/profileImageDisplay");
+  };
+
   const handlePostSubmit = async (e) => {
     e.preventDefault();
     if (!postText.trim()) return;
@@ -138,6 +171,7 @@ const ProfilePage = () => {
         timestamp: new Date().toISOString(),
         userId: profile.name,
         likes: 0,
+        dislikes: 0,
         comments: 0,
       });
 
@@ -163,6 +197,25 @@ const ProfilePage = () => {
       }));
     } catch (err) {
       console.error("Error liking post:", err);
+    }
+  };
+
+  const handleDislikePost = async (postId) => {
+    try {
+      const postRef = ref(database, `notes/${postId}`);
+      const currentDislikes = dislikes[postId] || 0;
+
+      await set(postRef, {
+        ...notes.find((note) => note.id === postId),
+        dislikes: currentDislikes + 1,
+      });
+
+      setDislikes((prev) => ({
+        ...prev,
+        [postId]: currentDislikes + 1,
+      }));
+    } catch (err) {
+      console.error("Error disliking post:", err);
     }
   };
 
@@ -307,13 +360,22 @@ const ProfilePage = () => {
       )}
 
       <div className="flex items-center justify-between text-gray-500 py-2 border-t border-b mb-4">
-        <button
-          onClick={() => handleLikePost(post.id)}
-          className="flex items-center gap-2 hover:bg-gray-100 px-4 py-2 rounded-md"
-        >
-          <ThumbsUp size={20} />
-          <span>{likes[post.id] || 0}</span>
-        </button>
+        <div className="flex items-center gap-4">
+          <button
+            onClick={() => handleLikePost(post.id)}
+            className="flex items-center gap-2 hover:bg-gray-100 px-4 py-2 rounded-md"
+          >
+            <ThumbsUp size={20} />
+            <span>{likes[post.id] || 0}</span>
+          </button>
+          <button
+            onClick={() => handleDislikePost(post.id)}
+            className="flex items-center gap-2 hover:bg-gray-100 px-4 py-2 rounded-md"
+          >
+            <ThumbsDown size={20} />
+            <span>{dislikes[post.id] || 0}</span>
+          </button>
+        </div>
         <button className="flex items-center gap-2 hover:bg-gray-100 px-4 py-2 rounded-md">
           <MessageCircle size={20} />
           <span>{post.comments}</span>
@@ -404,7 +466,7 @@ const ProfilePage = () => {
           <div className="w-full h-[350px] bg-gray-200 animate-pulse" />
         ) : (
           <img
-            src={coverImage || profileImage}
+            src={coverImage || defaultProfileImage}
             alt="Cover"
             className="w-full h-[350px] object-cover"
           />
@@ -429,12 +491,24 @@ const ProfilePage = () => {
 
       <div className="max-w-6xl mx-auto px-4 relative">
         <div className="flex flex-col md:flex-row items-start md:items-end gap-4 -mt-8 mb-4">
-          <div className="relative">
-            <img
-              src={profile.profilePhoto}
-              alt="Profile"
-              className="w-42 h-42 rounded-full border-4 border-white"
-            />
+          <div className="relative group">
+            {loadingProfile ? (
+              <div className="w-42 h-42 rounded-full bg-gray-200 animate-pulse border-4 border-white" />
+            ) : (
+              <>
+                <img
+                  src={profile.profilePhoto}
+                  alt="Profile"
+                  className="w-42 h-42 rounded-full border-4 border-white"
+                />
+                <button
+                  onClick={handleProfileImageClick}
+                  className="absolute bottom-2 right-2 bg-blue-500 p-2 rounded-full text-white opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:bg-blue-600"
+                >
+                  <Camera size={20} />
+                </button>
+              </>
+            )}
           </div>
 
           <div className="flex-grow">
