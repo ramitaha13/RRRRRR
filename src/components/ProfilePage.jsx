@@ -491,11 +491,11 @@ const ProfilePage = () => {
 
       <div className="max-w-6xl mx-auto px-4 relative">
         <div className="flex flex-col md:flex-row items-start md:items-end gap-4 -mt-8 mb-4">
-          <div className="relative group">
+          <div className="relative">
             {loadingProfile ? (
               <div className="w-42 h-42 rounded-full bg-gray-200 animate-pulse border-4 border-white" />
             ) : (
-              <>
+              <div className="relative">
                 <img
                   src={profile.profilePhoto}
                   alt="Profile"
@@ -503,11 +503,11 @@ const ProfilePage = () => {
                 />
                 <button
                   onClick={handleProfileImageClick}
-                  className="absolute bottom-2 right-2 bg-blue-500 p-2 rounded-full text-white opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:bg-blue-600"
+                  className="absolute bottom-2 right-2 bg-blue-500 p-2 rounded-full text-white hover:bg-blue-600 shadow-md transition-colors duration-200"
                 >
                   <Camera size={20} />
                 </button>
-              </>
+              </div>
             )}
           </div>
 
