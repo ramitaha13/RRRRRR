@@ -32,6 +32,16 @@ const ProfilePage = () => {
   const [showCommentOptions, setShowCommentOptions] = useState(null);
   const [likes, setLikes] = useState({});
 
+  // Authentication check on component mount
+  useEffect(() => {
+    const userInfo = JSON.parse(localStorage.getItem("user"));
+
+    // Check if user exists and username is exactly "Rami Sara"
+    if (!userInfo || userInfo.username !== "Rami&Sara") {
+      navigate("/home");
+    }
+  }, [navigate]);
+
   const profile = {
     name: "Rami Sara",
     coverPhoto: coverImage,
@@ -80,6 +90,7 @@ const ProfilePage = () => {
   }, []);
 
   const handleLogout = () => {
+    localStorage.removeItem("user");
     navigate("/home");
   };
 
