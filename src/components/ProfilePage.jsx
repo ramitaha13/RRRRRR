@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   MoreHorizontal,
@@ -25,6 +25,7 @@ import {
 } from "firebase/database";
 import { collection, getDocs } from "firebase/firestore";
 import defaultProfileImage from "../assets/1.JPG";
+import uploadSound from "../assets/3.mp3"; // Import the sound file
 
 const ProfilePage = () => {
   const navigate = useNavigate();
@@ -40,6 +41,17 @@ const ProfilePage = () => {
   const [profileImage, setProfileImage] = useState(null);
   const [loadingCover, setLoadingCover] = useState(true);
   const [loadingProfile, setLoadingProfile] = useState(true);
+
+  // Create audio reference with local sound file
+  const audioRef = useRef(new Audio(uploadSound));
+
+  // Add function to play sound
+  const playUploadSound = () => {
+    audioRef.current.currentTime = 0; // Reset sound to start
+    audioRef.current.play().catch((error) => {
+      console.error("Error playing sound:", error);
+    });
+  };
 
   useEffect(() => {
     const userInfo = JSON.parse(localStorage.getItem("user"));
@@ -174,6 +186,9 @@ const ProfilePage = () => {
         dislikes: 0,
         comments: 0,
       });
+
+      // Play sound after successful post
+      playUploadSound();
 
       setPostText("");
     } catch (err) {

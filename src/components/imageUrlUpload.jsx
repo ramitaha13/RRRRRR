@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { db } from "../firebase";
 import {
@@ -9,6 +9,8 @@ import {
   doc,
 } from "firebase/firestore";
 import { Trash2, ArrowLeft } from "lucide-react";
+// Import the sound file
+import uploadSound from "../assets/3.mp3";
 
 const LatestImageDisplay = () => {
   const navigate = useNavigate();
@@ -18,6 +20,9 @@ const LatestImageDisplay = () => {
   const [latestImage, setLatestImage] = useState(null);
   const [fetchingImage, setFetchingImage] = useState(true);
   const [deleting, setDeleting] = useState(false);
+
+  // Create audio reference with local sound file
+  const audioRef = useRef(new Audio(uploadSound));
 
   // Add authentication check
   useEffect(() => {
@@ -83,6 +88,13 @@ const LatestImageDisplay = () => {
     });
   };
 
+  const playUploadSound = () => {
+    audioRef.current.currentTime = 0; // Reset sound to start
+    audioRef.current.play().catch((error) => {
+      console.error("Error playing sound:", error);
+    });
+  };
+
   const handleImageUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -98,6 +110,9 @@ const LatestImageDisplay = () => {
     }
 
     try {
+      // Play sound when upload starts
+      playUploadSound();
+
       setLoading(true);
       setError("");
       setSuccess(false);
