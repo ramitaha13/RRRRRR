@@ -25,7 +25,10 @@ import {
 } from "firebase/database";
 import { collection, getDocs } from "firebase/firestore";
 import defaultProfileImage from "../assets/1.JPG";
-import uploadSound from "../assets/3.mp3"; // Import the sound file
+import uploadSound from "../assets/3.mp3";
+import likeSound from "../assets/4.mp3";
+import dislikeSound from "../assets/5.mp3";
+import commentSound from "../assets/6.mp3";
 
 const ProfilePage = () => {
   const navigate = useNavigate();
@@ -42,14 +45,41 @@ const ProfilePage = () => {
   const [loadingCover, setLoadingCover] = useState(true);
   const [loadingProfile, setLoadingProfile] = useState(true);
 
-  // Create audio reference with local sound file
-  const audioRef = useRef(new Audio(uploadSound));
+  // Create audio references
+  const uploadAudioRef = useRef(new Audio(uploadSound));
+  const likeAudioRef = useRef(new Audio(likeSound));
+  const dislikeAudioRef = useRef(new Audio(dislikeSound));
+  const commentAudioRef = useRef(new Audio(commentSound));
 
-  // Add function to play sound
+  // Add function to play like sound
+  const playLikeSound = () => {
+    likeAudioRef.current.currentTime = 0; // Reset sound to start
+    likeAudioRef.current.play().catch((error) => {
+      console.error("Error playing like sound:", error);
+    });
+  };
+
+  // Add function to play dislike sound
+  const playDislikeSound = () => {
+    dislikeAudioRef.current.currentTime = 0; // Reset sound to start
+    dislikeAudioRef.current.play().catch((error) => {
+      console.error("Error playing dislike sound:", error);
+    });
+  };
+
+  // Add function to play upload sound
   const playUploadSound = () => {
-    audioRef.current.currentTime = 0; // Reset sound to start
-    audioRef.current.play().catch((error) => {
-      console.error("Error playing sound:", error);
+    uploadAudioRef.current.currentTime = 0;
+    uploadAudioRef.current.play().catch((error) => {
+      console.error("Error playing upload sound:", error);
+    });
+  };
+
+  // Add function to play comment sound
+  const playCommentSound = () => {
+    commentAudioRef.current.currentTime = 0;
+    commentAudioRef.current.play().catch((error) => {
+      console.error("Error playing comment sound:", error);
     });
   };
 
@@ -187,9 +217,7 @@ const ProfilePage = () => {
         comments: 0,
       });
 
-      // Play sound after successful post
       playUploadSound();
-
       setPostText("");
     } catch (err) {
       console.error("Error saving note:", err);
@@ -210,6 +238,8 @@ const ProfilePage = () => {
         ...prev,
         [postId]: currentLikes + 1,
       }));
+
+      playLikeSound();
     } catch (err) {
       console.error("Error liking post:", err);
     }
@@ -229,6 +259,8 @@ const ProfilePage = () => {
         ...prev,
         [postId]: currentDislikes + 1,
       }));
+
+      playDislikeSound();
     } catch (err) {
       console.error("Error disliking post:", err);
     }
@@ -255,6 +287,8 @@ const ProfilePage = () => {
         ...notes.find((note) => note.id === postId),
         comments: currentComments + 1,
       });
+
+      playCommentSound();
 
       setCommentTexts((prev) => ({
         ...prev,
