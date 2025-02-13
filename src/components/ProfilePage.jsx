@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
+import TextareaAutosize from "react-textarea-autosize";
 import {
   MoreHorizontal,
   ThumbsUp,
@@ -53,7 +54,7 @@ const ProfilePage = () => {
 
   // Add function to play like sound
   const playLikeSound = () => {
-    likeAudioRef.current.currentTime = 0; // Reset sound to start
+    likeAudioRef.current.currentTime = 0;
     likeAudioRef.current.play().catch((error) => {
       console.error("Error playing like sound:", error);
     });
@@ -61,7 +62,7 @@ const ProfilePage = () => {
 
   // Add function to play dislike sound
   const playDislikeSound = () => {
-    dislikeAudioRef.current.currentTime = 0; // Reset sound to start
+    dislikeAudioRef.current.currentTime = 0;
     dislikeAudioRef.current.play().catch((error) => {
       console.error("Error playing dislike sound:", error);
     });
@@ -403,7 +404,7 @@ const ProfilePage = () => {
         </div>
       )}
 
-      <p className="mb-4">{post.content}</p>
+      <p className="mb-4 whitespace-pre-wrap break-words">{post.content}</p>
       {post.image && (
         <img src={post.image} alt="Post" className="w-full rounded-lg mb-4" />
       )}
@@ -435,11 +436,10 @@ const ProfilePage = () => {
         <img
           src={profile.profilePhoto}
           alt="Profile"
-          className="w-8 h-8 rounded-full"
+          className="w-8 h-8rounded-full"
         />
         <div className="flex-grow relative">
-          <input
-            type="text"
+          <TextareaAutosize
             placeholder="اكتب تعليقاً..."
             value={commentTexts[post.id] || ""}
             onChange={(e) =>
@@ -448,7 +448,10 @@ const ProfilePage = () => {
                 [post.id]: e.target.value,
               }))
             }
-            className="w-full bg-gray-100 rounded-full px-4 py-2 pr-12 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full bg-gray-100 rounded-full px-4 py-2 pr-12 focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[40px] resize-none"
+            style={{
+              direction: "rtl",
+            }}
           />
           <button
             onClick={() => handleCommentSubmit(post.id)}
@@ -474,7 +477,9 @@ const ProfilePage = () => {
                   <div className="text-sm text-gray-600">
                     {formatTimestamp(comment.timestamp)}
                   </div>
-                  <div className="mt-1">{comment.content}</div>
+                  <div className="mt-1 whitespace-pre-wrap break-words">
+                    {comment.content}
+                  </div>
                 </div>
                 {comment.userId === profile.name && (
                   <button
@@ -574,13 +579,17 @@ const ProfilePage = () => {
                   alt="Profile"
                   className="w-10 h-10 rounded-full"
                 />
-                <input
-                  type="text"
-                  placeholder="ماذا يدور في ذهنك؟"
-                  value={postText}
-                  onChange={(e) => setPostText(e.target.value)}
-                  className="flex-grow bg-gray-100 rounded-full px-4 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
+                <div className="flex-grow">
+                  <TextareaAutosize
+                    placeholder="ماذا يدور في ذهنك؟"
+                    value={postText}
+                    onChange={(e) => setPostText(e.target.value)}
+                    className="w-full bg-gray-100 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none min-h-[40px]"
+                    style={{
+                      direction: "rtl",
+                    }}
+                  />
+                </div>
               </div>
               <div className="flex items-center justify-end pt-3 border-t">
                 <button
